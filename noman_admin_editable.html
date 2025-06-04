@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Noman Mini Meesho - Admin</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f5f5f5; }
+    header { background-color: #673ab7; color: white; padding: 20px; text-align: center; }
+    .product-list { display: flex; flex-wrap: wrap; justify-content: center; padding: 20px; }
+    .product-card {
+      background: white;
+      width: 200px;
+      margin: 10px;
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .product-card img { width: 100%; height: 150px; object-fit: cover; border-radius: 8px; }
+    .product-card button { background: #4caf50; color: white; border: none; padding: 8px; margin-top: 5px; cursor: pointer; border-radius: 5px; display: block; width: 100%; }
+    .cart, .admin-panel { padding: 20px; background: #fff; margin: 20px; border-radius: 10px; }
+    footer { background: #eee; text-align: center; padding: 10px; }
+    input, textarea { width: 100%; padding: 8px; margin: 5px 0; border-radius: 5px; border: 1px solid #ccc; }
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Noman Mini Meesho - Admin Panel</h1>
+  </header>
+
+  <div class="admin-panel" id="adminPanel">
+    <input type="password" id="adminPass" placeholder="Enter Admin Password">
+    <button onclick="loginAdmin()">Login</button>
+
+    <div id="adminForm" class="hidden">
+      <h3>Add/Edit Product</h3>
+      <input type="text" id="prodName" placeholder="Product Name">
+      <input type="text" id="prodPrice" placeholder="Price">
+      <input type="text" id="prodImg" placeholder="Image URL">
+      <button onclick="saveProduct()">Save Product</button>
+      <button onclick="showOrders()">View Orders</button>
+    </div>
+
+    <div class="product-list" id="productList"></div>
+
+    <div id="orderHistory" class="hidden">
+      <h3>All Orders</h3>
+      <div id="orderList"></div>
+    </div>
+  </div>
+
+  <footer>
+    <p>© 2025 Noman Enterprises</p>
+  </footer>
+
+  <script>
+    let products = JSON.parse(localStorage.getItem('products')) || [];
+    let editIndex = -1;
+
+    function loginAdmin() {
+      const pass = document.getElementById('adminPass').value;
+      if (pass === "1234") {
+        document.getElementById('adminForm').classList.remove('hidden');
+        renderProducts();
+      } else {
+        alert("Wrong password!");
+      }
+    }
+
+    function saveProduct() {
+      const name = document.getElementById('prodName').value;
+      const price = parseFloat(document.getElementById('prodPrice').value);
+      const image = document.getElementById('prodImg').value;
+      if (!name || !price || !image) {
+        alert("Please fill all product details.");
+        return;
+      }
+      if (editIndex >= 0) {
+        products[editIndex] = { ...products[editIndex], name, price, image };
+        editIndex = -1;
+      } else {
+        const id = products.length ? products[products.length - 1].id + 1 : 1;
+        products.push({ id, name, price, image });
+      }
+      localStorage.setItem('products', JSON.stringify(products));
+      renderProducts();
+      document.getElementById('prodName').value = '';
+      document.getElementById('prodPrice').value = '';
+      document.getElementById('prodImg').value = '';
+    }
+
+    function renderProducts() {
+      const productList = document.getElementById('productList');
+      productList.innerHTML = '';
+      products.forEach((product, index) => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        card.innerHTML = `
+          <img src="${product.image}" alt="${product.name}">
+          <h3>${product.name}</h3>
+          <p>₹${product.price}</p>
+          <button onclick="editProduct(${index})">Edit</button>
+          <button style="background:#f44336" onclick="deleteProduct(${index})">Delete</button>
+        `;
+        productList.appendChild(card);
+      });
+    }
+
+    function editProduct(index) {
+      const product = products[index];
+      document.getElementById('prodName').value = product.name;
+      document.getElementById('prodPrice').value = product.price;
+      document.getElementById('prodImg').value = product.image;
+      editIndex = index;
+    }
+
+    function deleteProduct(index) {
+      if (confirm("Are you sure to delete this product?")) {
+        products.splice(index, 1);
+        localStorage.setItem('products', JSON.stringify(products));
+        renderProducts();
+      }
+    }
+
+    function showOrders() {
+      const orderList = document.getElementById("orderList");
+      const orders = JSON.parse(localStorage.getItem("orders") || "[]");
+      orderList.innerHTML = "";
+      orders.reverse().forEach((order, index) => {
+        const div = document.createElement("div");
+        div.style.border = "1px solid #ccc";
+        div.style.padding = "10px";
+        div.style.marginBottom = "10px";
+        div.innerHTML = `
+          <strong>${index + 1}. ${order.customer.name}</strong><br>
+          WhatsApp: ${order.customer.phone}<br>
+          Address: ${order.customer.address}<br>
+          Items: <ul>${order.items.map(item => `<li>${item.name} - ₹${item.price}</li>`).join("")}</ul>
+          <strong>Total: ₹${order.total}</strong><br>
+          <small>${order.date}</small>
+        `;
+        orderList.appendChild(div);
+      });
+      document.getElementById("orderHistory").classList.remove("hidden");
+    }
+  </script>
+</body>
+</html>
